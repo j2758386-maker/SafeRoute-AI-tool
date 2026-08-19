@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SafeRoute AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A121D;
+  --surface:#111F30;
+  --surface-2:#182B41;
+  --surface-3:#20395C;
+  --border:#28405C;
+  --text:#E8EEF6;
+  --text-dim:#8CA0B8;
+  --text-faint:#5D7188;
+  --safe:#33D6AE;
+  --safe-dim:#1E5C4C;
+  --caution:#F2B705;
+  --caution-dim:#5C4A10;
+  --alert:#FF5C4D;
+  --alert-dim:#5C241D;
+  --info:#6C8EF5;
+  --radius:14px;
+  --radius-sm:9px;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+body{-webkit-font-smoothing:antialiased;}
+#root{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;background:
+  radial-gradient(1200px 500px at 50% -200px, #10233b 0%, transparent 60%),
+  var(--bg);
+}
+::selection{background:var(--safe-dim);color:var(--text);}
+h1,h2,h3,.disp{font-family:var(--font-display);letter-spacing:-0.01em;}
+.mono{font-family:var(--font-mono);}
+a{color:var(--info);}
+button{font-family:var(--font-body);cursor:pointer;}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--safe);outline-offset:2px;}
+input,textarea,select{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  padding:11px 13px;border-radius:var(--radius-sm);font-size:14.5px;font-family:var(--font-body);
+}
+input::placeholder,textarea::placeholder{color:var(--text-faint);}
+label{display:block;font-size:12px;color:var(--text-dim);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+label:first-child{margin-top:0;}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(10,18,29,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between;}
+.brand{display:flex;align-items:center;gap:9px;}
+.brand-mark{width:26px;height:26px;flex:none;}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:16.5px;}
+.demo-pill{font-size:10.5px;font-weight:700;letter-spacing:.08em;background:var(--caution-dim);color:var(--caution);border:1px solid #8a6d0f;padding:4px 9px;border-radius:100px;}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
+
+/* screen container */
+.screen{flex:1;padding:18px 20px 100px;animation:fadein .25s ease both;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.eyebrow{font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:6px;}
+.h-title{font-size:23px;font-weight:700;margin:0 0 4px;}
+.h-sub{font-size:13.5px;color:var(--text-dim);margin:0 0 20px;line-height:1.5;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 17px;margin-bottom:12px;}
+.card-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.card-title{font-weight:600;font-size:14.5px;}
+.card-sub{font-size:12.5px;color:var(--text-dim);margin-top:2px;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--radius-sm);
+  padding:13px 16px;font-weight:600;font-size:14.5px;width:100%;transition:transform .12s ease, filter .12s ease;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--safe);color:#04231C;}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-alert{background:var(--alert);color:#2B0805;}
+.btn-ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.btn-outline{background:transparent;color:var(--safe);border:1px solid var(--safe-dim);}
+.btn-sm{padding:9px 12px;font-size:13px;width:auto;}
+.btn-row{display:flex;gap:10px;}
+.btn-row .btn{flex:1;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.03em;padding:4px 9px;border-radius:100px;}
+.tag-low{background:var(--safe-dim);color:var(--safe);}
+.tag-medium{background:var(--caution-dim);color:var(--caution);}
+.tag-high{background:var(--alert-dim);color:var(--alert);}
+
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.list-item:last-child{border-bottom:none;}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;color:var(--text);}
+
+/* bottom nav */
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  background:rgba(11,20,32,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border);
+  display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;background:none;border:none;color:var(--text-faint);}
+.tab.active{color:var(--safe);}
+.tab svg{width:20px;height:20px;}
+.tab span{font-size:10px;font-weight:600;}
+
+/* thread map */
+.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:#0C1A29;}
+.map-wrap canvas{display:block;width:100%;}
+.map-badge{position:absolute;top:10px;left:10px;background:rgba(10,18,29,.75);backdrop-filter:blur(6px);
+  padding:5px 10px;border-radius:100px;font-size:11px;font-weight:600;border:1px solid var(--border);}
+.map-legend{position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:12px;font-size:10.5px;color:var(--text-dim);flex-wrap:wrap;}
+.map-legend span{display:flex;align-items:center;gap:5px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+/* modal / sheet */
+.overlay{position:fixed;inset:0;background:rgba(5,10,16,.72);backdrop-filter:blur(3px);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fadein .18s ease;}
+.sheet{width:100%;max-width:480px;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;
+  padding:22px 20px calc(22px + env(safe-area-inset-bottom));animation:slideup .22s ease;}
+@keyframes slideup{from{transform:translateY(30px);opacity:0;}to{transform:none;opacity:1;}}
+.sheet.alert-sheet{border-top:2px solid var(--alert);}
+.countdown-ring{width:64px;height:64px;margin:0 auto 14px;position:relative;}
+.progressbar{height:6px;background:var(--surface-2);border-radius:100px;overflow:hidden;margin:14px 0 4px;}
+.progressbar-fill{height:100%;background:var(--alert);border-radius:100px;transition:width 1s linear;}
+
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;background:var(--surface-2);
+  border:1px solid var(--border);padding:10px 16px;border-radius:100px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:8px;max-width:88%;animation:toastin .25s ease;}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,-8px);}to{opacity:1;transform:translate(-50%,0);}}
+
+.risk-meter{display:flex;gap:4px;margin:10px 0;}
+.risk-seg{flex:1;height:8px;border-radius:100px;background:var(--surface-2);}
+.risk-seg.on-low{background:var(--safe);}
+.risk-seg.on-med{background:var(--caution);}
+.risk-seg.on-high{background:var(--alert);}
+
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+  padding:6px 11px;border-radius:100px;font-size:12.5px;margin:0 6px 6px 0;}
+.chip.selected{background:var(--safe-dim);border-color:var(--safe);color:var(--safe);}
+
+.empty{text-align:center;padding:34px 10px;color:var(--text-dim);}
+.empty svg{width:38px;height:38px;margin-bottom:10px;opacity:.6;}
+
+.small-note{font-size:11.5px;color:var(--text-faint);line-height:1.5;margin-top:8px;}
+.err-banner{background:var(--alert-dim);border:1px solid #7a2d24;color:#ffb3ab;padding:10px 12px;border-radius:var(--radius-sm);
+  font-size:12.5px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.45;}
+.spinner{width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;
+  animation:spin .7s linear infinite;flex:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.pulse{animation:pulseAnim 1.6s ease-in-out infinite;}
+@keyframes pulseAnim{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+.thumb{width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);display:block;object-fit:cover;max-height:180px;}
+.upload-box{border:1.5px dashed var(--border);border-radius:var(--radius);padding:22px 14px;text-align:center;color:var(--text-dim);font-size:13px;}
+.upload-box input{display:none;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toastHost"></div>
+<div id="modalHost"></div>
+<script>
+/* =========================================================
+   SafeRoute AI — application logic
+   Real, working pieces:
+     - Browser Geolocation API for actual device position
+     - window.storage persistent backend (personal + shared/community)
+     - Deterministic route-deviation / stop-detection / risk-engine math
+     - Real AI call (Anthropic Claude, via the in-artifact API) used as the
+       documented stand-in for Gemini for hazard image/text classification
+       — see README "AI substitution" for why, and how to swap to Gemini.
+   Clearly-labeled simulation:
+     - No Google Maps key is available in this environment, so the map is a
+       schematic canvas "thread map" (straight-line route), not road-following.
+     - Demo Mode synthesizes location updates instead of real GPS so judges
+       can reproduce the safety workflow on demand.
+   ========================================================= */
+
+const $ = sel => document.querySelector(sel);
+const root = $('#root');
+const uid = () => 'id_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const nowISO = () => new Date().toISOString();
+const fmtTime = iso => new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+const fmtDate = iso => new Date(iso).toLocaleDateString([], {month:'short',day:'numeric'});
+const fmtDateTime = iso => `${fmtDate(iso)}, ${fmtTime(iso)}`;
+
+function toast(msg, kind){
+  const host = $('#toastHost');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span>${msg}</span>`;
+  host.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .25s'; setTimeout(()=>el.remove(),250); }, 3200);
+}
+
+/* ---------- geo math (deterministic, no LLM) ---------- */
+const R_EARTH = 6371000;
+function toRad(d){ return d * Math.PI/180; }
+function haversine(a,b){
+  const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
+  const la1 = toRad(a.lat), la2 = toRad(b.lat);
+  const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+  return 2*R_EARTH*Math.asin(Math.sqrt(h));
+}
+// local equirectangular projection around an origin, good enough for short urban distances
+function project(p, origin){
+  const x = toRad(p.lng-origin.lng) * Math.cos(toRad(origin.lat)) * R_EARTH;
+  const y = toRad(p.lat-origin.lat) * R_EARTH;
+  return {x,y};
+}
+function distPointToSegment(p, a, b){
+  const A = p.x-a.x, B = p.y-a.y, C = b.x-a.x, D = b.y-a.y;
+  const dot = A*C+B*D, lenSq = C*C+D*D;
+  let t = lenSq !== 0 ? dot/lenSq : -1;
+  t = Math.max(0, Math.min(1, t));
+  const ex = a.x + t*C, ey = a.y + t*D;
+  return Math.hypot(p.x-ex, p.y-ey);
+}
+// minimum perpendicular distance (meters) from a lat/lng point to a polyline
+function distanceToRoute(point, route){
+  if(!route || route.length < 2) return 0;
+  const origin = route[0];
+  const p = project(point, origin);
+  let min = Infinity;
+  for(let i=0;i<route.length-1;i++){
+    const a = project(route[i], origin);
+    const b = project(route[i+1], origin);
+    min = Math.min(min, distPointToSegment(p,a,b));
+  }
+  return min;
+}
+
+/* ---------- persistent storage (window.storage) ---------- */
+const StorageKeys = { PROFILE:'saferoute-profile', JOURNEYS:'saferoute-journeys', HAZARDS:'saferoute-hazards' };
+async function storeGet(key, shared){
+  try{ const r = await window.storage.get(key, !!shared); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function storeSet(key, value, shared){
+  try{ await window.storage.set(key, JSON.stringify(value), !!shared); return true; }
+  catch(e){ console.error('storage set failed', e); toast('Storage error — changes may not persist.'); return false; }
+}
+
+/* ---------- app state ---------- */
+const State = {
+  profile: null,       // {user, contacts}
+  journeys: [],         // personal, includes embedded path + safetyEvents
+  hazards: [],           // community/shared
+  view: 'loading',
+  activeJourneyId: null,
+  planning: null,        // in-progress "start journey" draft
+  watchId: null,
+  demoTimer: null,
+  pendingSafetyEvent: null, // {journeyId, eventId, deadline, timerHandle}
+  lastStopCheckAt: null,
+  stillSince: null,
+};
+
+async function loadAll(){
+  const [profile, journeys, hazards] = await Promise.all([
+    storeGet(StorageKeys.PROFILE, false),
+    storeGet(StorageKeys.JOURNEYS, false),
+    storeGet(StorageKeys.HAZARDS, true),
+  ]);
+  State.profile = profile;
+  State.journeys = journeys || [];
+  State.hazards = hazards || [];
+}
+async function saveProfile(){ await storeSet(StorageKeys.PROFILE, State.profile, false); }
+async function saveJourneys(){ await storeSet(StorageKeys.JOURNEYS, State.journeys, false); }
+async function saveHazards(){ await storeSet(StorageKeys.HAZARDS, State.hazards, true); }
+
+function getJourney(id){ return State.journeys.find(j=>j.id===id); }
+function activeJourney(){ return State.activeJourneyId ? getJourney(State.activeJourneyId) : null; }
+
+/* ---------- geolocation (real device location) ---------- */
+function getCurrentPosition(){
+  return new Promise((resolve,reject)=>{
+    if(!('geolocation' in navigator)){ reject(new Error('Geolocation is not supported on this device.')); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy}),
+      err => reject(err),
+      {enableHighAccuracy:true, timeout:10000, maximumAge:5000}
+    );
+  });
+}
+function startWatch(onUpdate, onError){
+  if(!('geolocation' in navigator)){ onError(new Error('Geolocation is not supported on this device.')); return null; }
+  return navigator.geolocation.watchPosition(
+    pos => onUpdate({lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy}),
+    err => onError(err),
+    {enableHighAccuracy:true, maximumAge:4000, timeout:15000}
+  );
+}
+function stopWatch(){
+  if(State.watchId !== null){ navigator.geolocation.clearWatch(State.watchId); State.watchId = null; }
+  if(State.demoTimer){ clearInterval(State.demoTimer); State.demoTimer = null; }
+}
+
+/* =========================================================
+   Route deviation + unexpected-stop detection
+   Deterministic software logic only (no LLM), as required.
+   ========================================================= */
+const DEFAULT_PREFS = {
+  deviationThresholdM: 150,     // meters off the planned route to count as "meaningful"
+  deviationStreakNeeded: 3,      // consecutive readings past threshold before alarming (debounces GPS noise)
+  stopRadiusM: 25,               // movement under this radius counts as "not moving"
+  stopTimeoutMin: 6,             // minutes stationary (mid-route) before flagging a stop
+  safetyCheckTimeoutSec: 90,     // seconds to respond to a safety check before auto-escalation
+  reEscalationCooldownMin: 5,    // don't fire a second safety check within this many minutes of resolving one
+};
+
+function evaluateJourneyTick(journey, point, prefs){
+  // returns {deviation:{active,distanceM,streak}, stop:{active,minutes}}
+  journey._devStreak = journey._devStreak || 0;
+  const distanceM = distanceToRoute(point, journey.expectedRoute);
+  const overThreshold = distanceM > prefs.deviationThresholdM;
+  journey._devStreak = overThreshold ? journey._devStreak + 1 : 0;
+  const deviationActive = journey._devStreak >= prefs.deviationStreakNeeded;
+
+  // stop detection: compare to the last "anchor" point
+  if(!journey._stopAnchor){
+    journey._stopAnchor = {...point, since: Date.now()};
+  } else {
+    const moved = haversine(journey._stopAnchor, point);
+    if(moved > prefs.stopRadiusM){
+      journey._stopAnchor = {...point, since: Date.now()};
+    }
+  }
+  const stationaryMin = (Date.now() - journey._stopAnchor.since) / 60000;
+  const stopActive = stationaryMin >= prefs.stopTimeoutMin;
+
+  return {
+    deviation:{active:deviationActive, distanceM, streak:journey._devStreak},
+    stop:{active:stopActive, minutes:stationaryMin}
+  };
+}
+
+function canTriggerSafetyCheck(journey, prefs){
+  if(State.pendingSafetyEvent) return false; // one active check at a time — no alert spam
+  const last = (journey.safetyEvents||[]).slice(-1)[0];
+  if(last && last.status !== 'pending'){
+    const mins = (Date.now() - new Date(last.timestamp).getTime())/60000;
+    if(mins < prefs.reEscalationCooldownMin) return false;
+  }
+  return true;
+}
+
+function createSafetyEvent(journey, type, detail){
+  const ev = {
+    id: uid(), journeyId: journey.id, type, // 'deviation' | 'stop' | 'manual'
+    detail,
+    severity: type === 'manual' ? 'high' : 'medium',
+    timestamp: nowISO(), status: 'pending', userResponse: null,
+  };
+  journey.safetyEvents = journey.safetyEvents || [];
+  journey.safetyEvents.push(ev);
+  return ev;
+}
+
+async function escalateToContacts(journey, ev, reason){
+  ev.status = 'escalated';
+  ev.userResponse = ev.userResponse || 'no_response';
+  ev.escalatedAt = nowISO();
+  const contacts = (State.profile.contacts||[]).filter(c=>c.enabled);
+  const point = journey.path.length ? journey.path[journey.path.length-1] : journey.origin;
+  const alert = {
+    id: uid(),
+    journeyId: journey.id,
+    safetyEventId: ev.id,
+    userName: State.profile.user.name,
+    location: point,
+    destination: journey.destination.label,
+    time: nowISO(),
+    reason,
+    mapRef: `https://www.google.com/maps?q=${point.lat},${point.lng}`,
+    notifiedContacts: contacts.map(c=>({contactId:c.id, name:c.name, channel:'in-app-alert', sentAt: nowISO()})),
+  };
+  journey.escalations = journey.escalations || [];
+  journey.escalations.push(alert);
+  await saveJourneys();
+
+  // Real (best-available) notification: browser Notification API, since no SMS/Twilio
+  // credentials exist in this environment. See README for wiring real SMS/FCM.
+  try{
+    if('Notification' in window){
+      if(Notification.permission === 'granted'){
+        new Notification('SafeRoute AI — Trusted contact alert sent', {
+          body: `${alert.userName}: ${reason}. ${contacts.length} contact(s) notified.`,
+        });
+      }
+    }
+  }catch(e){ /* non-fatal */ }
+
+  toast(contacts.length ? `Trusted contacts alerted (${contacts.length}).` : 'No enabled trusted contacts — alert logged only.');
+  State.pendingSafetyEvent = null;
+  render();
+}
+
+function triggerSafetyCheck(journey, type, detail){
+  if(!canTriggerSafetyCheck(journey, State.profile.user.preferences)) return;
+  const ev = createSafetyEvent(journey, type, detail);
+  const timeoutSec = State.profile.user.preferences.safetyCheckTimeoutSec;
+  State.pendingSafetyEvent = {
+    journeyId: journey.id, eventId: ev.id,
+    deadline: Date.now() + timeoutSec*1000, timeoutSec,
+  };
+  saveJourneys();
+  render();
+}
+
+function resolveSafetyEvent(response){
+  const pend = State.pendingSafetyEvent;
+  if(!pend) return;
+  const journey = getJourney(pend.journeyId);
+  const ev = (journey.safetyEvents||[]).find(e=>e.id===pend.eventId);
+  if(!ev) { State.pendingSafetyEvent = null; return; }
+  if(response === 'ok'){
+    ev.status = 'resolved'; ev.userResponse = 'ok'; ev.resolvedAt = nowISO();
+    State.pendingSafetyEvent = null;
+    saveJourneys();
+    toast("Marked as OK. Journey continuing.");
+    render();
+  } else if(response === 'help'){
+    escalateToContacts(journey, ev, 'User selected "I need help" during a safety check.');
+  }
+}
+
+/* =========================================================
+   PHASE 3 — Safety Risk Engine
+   Deterministic, explainable scoring. Never predicts crime;
+   only aggregates observable indicators into LOW/MODERATE/HIGH.
+   ========================================================= */
+function severityWeight(sev){ return sev==='high'?3 : sev==='medium'?2 : 1; }
+function recencyFactor(iso){
+  const days = (Date.now() - new Date(iso).getTime())/86400000;
+  if(days <= 3) return 1;
+  if(days <= 14) return 0.6;
+  if(days <= 30) return 0.3;
+  return 0.12;
+}
+function nearbyHazards(routeOrPoint, isRoute){
+  const BUFFER_M = 300;
+  const WINDOW_DAYS = 30;
+  const cutoff = Date.now() - WINDOW_DAYS*86400000;
+  return State.hazards.filter(h=>{
+    if(h.status !== 'confirmed') return false;
+    if(new Date(h.createdAt).getTime() < cutoff) return false;
+    const d = isRoute ? distanceToRoute(h.location, routeOrPoint) : haversine(h.location, routeOrPoint);
+    return d <= BUFFER_M;
+  });
+}
+function computeRisk({deviation, stop, hazards}){
+  const factors = [];
+  let score = 0;
+
+  if(deviation && deviation.active){
+    const mult = deviation.distanceM > 450 ? 3 : 2;
+    score += mult;
+    factors.push(`the journey has deviated ~${Math.round(deviation.distanceM)}m from the planned route`);
+  }
+  if(stop && stop.active){
+    const mult = stop.minutes > 12 ? 3 : 2;
+    score += mult;
+    factors.push(`an unexpected stop of about ${Math.round(stop.minutes)} minutes was detected`);
+  }
+  if(hazards && hazards.length){
+    let hazScore = 0;
+    const byCategory = {};
+    hazards.forEach(h=>{
+      hazScore += severityWeight(h.severity) * recencyFactor(h.createdAt);
+      byCategory[h.category] = (byCategory[h.category]||0)+1;
+    });
+    hazScore = Math.min(4, hazScore);
+    if(hazScore > 0.4){
+      score += hazScore;
+      const topCat = Object.entries(byCategory).sort((a,b)=>b[1]-a[1])[0];
+      factors.push(`there ${hazards.length===1?'is':'are'} ${hazards.length} recent community report${hazards.length===1?'':'s'} nearby${topCat ? ` (mostly ${topCat[0]} related)`:''}`);
+    }
+  }
+
+  let level = 'LOW';
+  if(score >= 5) level = 'HIGH';
+  else if(score >= 2) level = 'MODERATE';
+
+  let explanation;
+  if(!factors.length){
+    explanation = 'No meaningful safety indicators are currently present.';
+  } else {
+    const label = level === 'HIGH' ? 'Elevated safety concern' : level === 'MODERATE' ? 'Moderate safety concern' : 'Low safety concern';
+    explanation = `${label} because ${factors.join(', and ')}.`;
+  }
+  return {level, score: Math.round(score*10)/10, factors, explanation};
+}
+
+/* =========================================================
+   PHASE 2 — AI hazard classification
+   Uses the in-artifact Anthropic API call as the AI service actually
+   available in this environment. This is a documented, functioning
+   stand-in for Gemini — see README "AI substitution" for the exact
+   swap (same JSON contract, different endpoint/key).
+   ========================================================= */
+async function classifyHazardWithAI({imageBase64, mediaType, description}){
+  const sys = `You are a community infrastructure/safety-hazard classifier for a pedestrian safety app.
+Given an optional photo and optional text, respond with ONLY a JSON object, no prose, no markdown fences:
+{"category": one of ["streetlight","road_damage","unsafe_crossing","obstruction","poor_visibility","flooding","other"],
+ "description": "one short factual sentence describing the hazard",
+ "severity": one of ["low","medium","high"],
+ "confidence": number between 0 and 1}
+Never state or imply anything about crime, attackers, or personal danger from people. Only assess the physical/infrastructure hazard itself. If the image is unclear or unrelated, use category "other" and lower confidence.`;
+
+  const content = [];
+  if(imageBase64){
+    content.push({type:'image', source:{type:'base64', media_type: mediaType||'image/jpeg', data: imageBase64}});
+  }
+  content.push({type:'text', text: description ? `Hazard description from reporter: "${description}"` : 'No text description was provided — classify from the image alone.'});
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      system: sys,
+      messages: [{role:'user', content}],
+    })
+  });
+  if(!resp.ok){ throw new Error(`AI service error (${resp.status})`); }
+  const data = await resp.json();
+  const textBlock = (data.content||[]).find(b=>b.type==='text');
+  if(!textBlock || !textBlock.text || !textBlock.text.trim()){ throw new Error('Empty AI response'); }
+  let clean = textBlock.text.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  let parsed;
+  try{ parsed = JSON.parse(clean); }
+  catch(e){ throw new Error('AI returned invalid JSON'); }
+
+  const validCats = ["streetlight","road_damage","unsafe_crossing","obstruction","poor_visibility","flooding","other"];
+  const validSev = ["low","medium","high"];
+  if(!validCats.includes(parsed.category)) parsed.category = 'other';
+  if(!validSev.includes(parsed.severity)) parsed.severity = 'medium';
+  if(typeof parsed.confidence !== 'number' || isNaN(parsed.confidence)) parsed.confidence = 0.5;
+  parsed.confidence = Math.max(0, Math.min(1, parsed.confidence));
+  if(!parsed.description || typeof parsed.description !== 'string') parsed.description = description || 'Unspecified hazard.';
+  return parsed;
+}
+
+/* deterministic duplicate-detection (no AI) */
+function findRelatedHazard(newReport){
+  const WINDOW_MS = 48*3600*1000;
+  const RADIUS_M = 120;
+  return State.hazards.find(h=>
+    h.category === newReport.category &&
+    Math.abs(new Date(h.createdAt).getTime() - new Date(newReport.createdAt).getTime()) <= WINDOW_MS &&
+    haversine(h.location, newReport.location) <= RADIUS_M
+  ) || null;
+}
+
+/* =========================================================
+   Icons (inline SVG, single stroke set, no external icon deps)
+   ========================================================= */
+const Icon = {
+  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>`,
+  route: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M5 8v3a4 4 0 0 0 4 4h6a4 4 0 0 1 4 4"/></svg>`,
+  hazard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>`,
+  map: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 20 3 18V5l6 2m0 13 6-2m-6 2V7m6 11 6 2V7l-6-2m0 15V5m0 0L9 7"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>`,
+  shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>`,
+  bell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.5 6 2 7H4c.5-1 2-2.5 2-7Z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>`,
+  chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4Z"/><circle cx="12" cy="13.5" r="3.5"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg>`,
+  x: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg>`,
+};
+function brandMark(){
+  return `<svg class="brand-mark" viewBox="0 0 26 26" fill="none"><path d="M13 2 3 5.6v7c0 6.4 4.3 10.8 10 12.4 5.7-1.6 10-6 10-12.4v-7L13 2Z" stroke="#33D6AE" stroke-width="1.6"/><path d="M8 13.5 11.5 17 18.5 9" stroke="#33D6AE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+/* =========================================================
+   Shared chrome: topbar + tabbar
+   ========================================================= */
+function renderTopbar(title){
+  const demo = State.profile?.user?.preferences?.demoMode;
+  return `<div class="topbar">
+    <div class="brand">${brandMark()}<span class="brand-name">${title || 'SafeRoute AI'}</span></div>
+    ${demo ? `<span class="demo-pill">DEMO MODE</span>` : `<span></span>`}
+  </div>`;
+}
+const TABS = [
+  {id:'home', label:'Home', icon:Icon.home},
+  {id:'startJourney', label:'Journey', icon:Icon.route},
+  {id:'hazardReport', label:'Report', icon:Icon.hazard},
+  {id:'communityMap', label:'Map', icon:Icon.map},
+  {id:'settings', label:'Settings', icon:Icon.settings},
+];
+function renderTabbar(){
+  return `<div class="tabbar">
+    ${TABS.map(t=>`<button class="tab ${State.view===t.id?'active':''}" data-nav="${t.id}">${t.icon}<span>${t.label}</span></button>`).join('')}
+  </div>`;
+}
+function withChrome(title, bodyHtml, opts={}){
+  return `${renderTopbar(title)}<div class="screen">${bodyHtml}</div>${opts.noTabbar ? '' : renderTabbar()}`;
+}
+
+/* =========================================================
+   ONBOARDING
+   ========================================================= */
+State.onboardDraft = { name:'', contacts:[], locationGranted:false, locationError:null, prefs:{...DEFAULT_PREFS} };
+
+function renderOnboarding(){
+  const d = State.onboardDraft;
+  const body = `
+    <div class="eyebrow">Welcome</div>
+    <h1 class="h-title">Set up SafeRoute AI</h1>
+    <p class="h-sub">A safety companion for solo journeys — it watches your route, checks in if something looks off, and alerts people you trust. It cannot predict crime or guarantee safety; it's an escalation tool.</p>
+
+    <div class="card">
+      <label>Your name</label>
+      <input id="ob-name" placeholder="e.g. Priya Sharma" value="${escapeAttr(d.name)}"/>
+    </div>
+
+    <div class="card">
+      <div class="card-row"><div class="card-title">Trusted contacts</div><button class="btn btn-outline btn-sm" id="ob-add-contact">+ Add</button></div>
+      <div class="card-sub" style="margin-bottom:4px;">At least one is required so escalations have somewhere to go.</div>
+      ${d.contacts.length ? d.contacts.map((c,i)=>`
+        <div class="list-item">
+          <div class="avatar">${initials(c.name)}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${escapeHtml(c.name)||'Unnamed'}</div>
+            <div class="card-sub">${escapeHtml(c.relationship)||'Contact'} · ${escapeHtml(c.contact)||'no contact info'}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" data-remove-ob-contact="${i}">${Icon.trash}</button>
+        </div>`).join('') : `<div class="small-note">No contacts added yet.</div>`}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Location permission</div>
+      <div class="card-sub" style="margin-bottom:10px;">SafeRoute AI needs your real device location to track journeys and detect deviations.</div>
+      <button class="btn ${d.locationGranted?'btn-ghost':'btn-primary'}" id="ob-grant-location" ${d.locationGranted?'disabled':''}>
+        ${d.locationGranted ? Icon.check+' Location enabled' : 'Enable location access'}
+      </button>
+      ${d.locationError ? `<div class="err-banner" style="margin-top:10px;">${Icon.x}<span>${escapeHtml(d.locationError)}</span></div>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Safety preferences</div>
+      <label>Deviation sensitivity (meters off-route)</label>
+      <input type="number" id="ob-dev" value="${d.prefs.deviationThresholdM}" min="50" step="10"/>
+      <label>Safety-check response window (seconds)</label>
+      <input type="number" id="ob-timeout" value="${d.prefs.safetyCheckTimeoutSec}" min="10" step="5"/>
+      <div class="small-note">You can change these anytime in Settings. Shorter windows suit demos; real use typically wants 60–120s.</div>
+    </div>
+
+    <button class="btn btn-primary" id="ob-finish" style="margin-top:6px;">Create account & continue</button>
+  `;
+  return `${renderTopbar()}<div class="screen" style="padding-top:24px;">${body}</div>`;
+}
+
+function initials(name){ return (name||'?').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('') || '?'; }
+function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+function wireOnboarding(){
+  $('#ob-name')?.addEventListener('input', e=> State.onboardDraft.name = e.target.value);
+  $('#ob-dev')?.addEventListener('input', e=> State.onboardDraft.prefs.deviationThresholdM = Number(e.target.value)||DEFAULT_PREFS.deviationThresholdM);
+  $('#ob-timeout')?.addEventListener('input', e=> State.onboardDraft.prefs.safetyCheckTimeoutSec = Number(e.target.value)||DEFAULT_PREFS.safetyCheckTimeoutSec);
+  $('#ob-add-contact')?.addEventListener('click', ()=>{ openContactSheet(c=>{ State.onboardDraft.contacts.push(c); render(); }); });
+  root.querySelectorAll('[data-remove-ob-contact]').forEach(b=>{
+    b.addEventListener('click', ()=>{ State.onboardDraft.contacts.splice(Number(b.dataset.removeObContact),1); render(); });
+  });
+  $('#ob-grant-location')?.addEventListener('click', async ()=>{
+    try{
+      await getCurrentPosition();
+      State.onboardDraft.locationGranted = true;
+      State.onboardDraft.locationError = null;
+    }catch(e){
+      State.onboardDraft.locationError = geoErrorMessage(e);
+    }
+    render();
+  });
+  $('#ob-finish')?.addEventListener('click', async ()=>{
+    const d = State.onboardDraft;
+    if(!d.name.trim()){ toast('Add your name to continue.'); return; }
+    if(!d.contacts.length){ toast('Add at least one trusted contact.'); return; }
+    if(!d.locationGranted){ toast('Enable location access to continue.'); return; }
+    State.profile = {
+      user: { id: uid(), name: d.name.trim(), createdAt: nowISO(), preferences: {...DEFAULT_PREFS, ...d.prefs, demoMode:false} },
+      contacts: d.contacts.map(c=>({id:uid(), ...c, enabled:true})),
+    };
+    await saveProfile();
+    State.view = 'home';
+    render();
+  });
+}
+function geoErrorMessage(e){
+  if(e && e.code === 1) return 'Location permission was denied. Enable it in your browser/site settings and try again.';
+  if(e && e.code === 2) return 'Location is currently unavailable on this device.';
+  if(e && e.code === 3) return 'Getting your location timed out. Try again.';
+  return e?.message || 'Could not get your location.';
+}
+
+/* ---------- contact add/edit sheet ---------- */
+function openContactSheet(onSave, existing){
+  const host = $('#modalHost');
+  const c = existing || {name:'',relationship:'',contact:''};
+  host.innerHTML = `<div class="overlay" id="contact-overlay"><div class="sheet">
+    <h3 style="margin:0 0 14px;">${existing?'Edit contact':'Add trusted contact'}</h3>
+    <label>Name</label><input id="cs-name" value="${escapeAttr(c.name)}" placeholder="e.g. Mom"/>
+    <label>Relationship</label><input id="cs-rel" value="${escapeAttr(c.relationship)}" placeholder="e.g. Parent, Roommate, Friend"/>
+    <label>Phone or email</label><input id="cs-contact" value="${escapeAttr(c.contact)}" placeholder="e.g. +91 98xxxxxxx0"/>
+    <div class="btn-row" style="margin-top:18px;">
+      <button class="btn btn-ghost" id="cs-cancel">Cancel</button>
+      <button class="btn btn-primary" id="cs-save">Save contact</button>
+    </div>
+  </div></div>`;
+  $('#cs-cancel').addEventListener('click', ()=> host.innerHTML='');
+  $('#contact-overlay').addEventListener('click', e=>{ if(e.target.id==='contact-overlay') host.innerHTML=''; });
+  $('#cs-save').addEventListener('click', ()=>{
+    const name = $('#cs-name').value.trim();
+    if(!name){ toast('Contact needs a name.'); return; }
+    onSave({name, relationship:$('#cs-rel').value.trim(), contact:$('#cs-contact').value.trim()});
+    host.innerHTML='';
+  });
+}
+
+/* =========================================================
+   HOME
+   ========================================================= */
+function renderHome(){
+  const u = State.profile.user;
+  const active = activeJourney();
+  const recent = [...State.journeys].sort((a,b)=> new Date(b.startedAt)-new Date(a.startedAt)).slice(0,3);
+  const body = `
+    <div class="eyebrow">${greeting()}</div>
+    <h1 class="h-title">${escapeHtml(u.name.split(' ')[0])}</h1>
+    <p class="h-sub">${active ? 'A journey is currently active.' : 'No active journey right now.'}</p>
+
+    ${active ? `
+      <div class="card" style="border-color:var(--safe-dim);">
+        <div class="card-row">
+          <div><div class="card-title"><span class="status-dot" style="background:var(--safe);"></span>En route to ${escapeHtml(active.destination.label)}</div>
+          <div class="card-sub">Started ${fmtTime(active.startedAt)}</div></div>
+          <button class="btn btn-primary btn-sm" data-nav="activeJourney">Open</button>
+        </div>
+      </div>` : `
+      <div class="card">
+        <div class="card-row">
+          <div><div class="card-title">Start a journey</div><div class="card-sub">Track a route and get automatic safety checks.</div></div>
+          <button class="btn btn-primary btn-sm" data-nav="startJourney">Start</button>
+        </div>
+      </div>`}
+
+    <div class="card">
+      <div class="card-row"><div class="card-title">Trusted contacts</div><button class="btn btn-outline btn-sm" data-nav="contacts">Manage</button></div>
+      <div class="card-sub">${State.profile.contacts.filter(c=>c.enabled).length} enabled of ${State.profile.contacts.length}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px;">Recent journeys</div>
+      ${recent.length ? recent.map(j=>`
+        <div class="list-item">
+          <div class="avatar">${Icon.route}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${escapeHtml(j.destination.label)}</div>
+            <div class="card-sub">${fmtDateTime(j.startedAt)} · ${journeyStatusLabel(j)}</div>
+          </div>
+        </div>`).join('') : `<div class="small-note">No journeys yet.</div>`}
+      ${State.journeys.length > 3 ? `<button class="btn btn-ghost btn-sm" style="margin-top:10px;" data-nav="history">View all journeys</button>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-row"><div class="card-title">Report a hazard</div><div class="card-sub">Broken light, damaged road, unsafe crossing…</div></div>
+      <button class="btn btn-ghost btn-sm" data-nav="hazardReport" style="margin-top:10px;width:100%;">Open hazard report</button>
+    </div>
+  `;
+  return withChrome(null, body);
+}
+function greeting(){ const h = new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; }
+function journeyStatusLabel(j){
+  if(j.status==='active') return 'Active';
+  if(j.status==='completed') return 'Completed';
+  if(j.status==='escalated') return 'Escalated';
+  return j.status;
+}
+
+/* =========================================================
+   TRUSTED CONTACTS (management screen)
+   ========================================================= */
+function renderContacts(){
+  const contacts = State.profile.contacts;
+  const body = `
+    <div class="eyebrow">Safety</div>
+    <h1 class="h-title">Trusted contacts</h1>
+    <p class="h-sub">These people are alerted with your location, destination, and reason if a safety check isn't resolved.</p>
+    <div class="card">
+      ${contacts.length ? contacts.map(c=>`
+        <div class="list-item">
+          <div class="avatar">${initials(c.name)}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${escapeHtml(c.name)}</div>
+            <div class="card-sub">${escapeHtml(c.relationship)||'Contact'} · ${escapeHtml(c.contact)||'—'}</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;margin:0;text-transform:none;font-size:11.5px;color:var(--text-dim);">
+            <input type="checkbox" style="width:auto;" data-toggle-contact="${c.id}" ${c.enabled?'checked':''}/> On
+          </label>
+          <button class="btn btn-ghost btn-sm" data-remove-contact="${c.id}">${Icon.trash}</button>
+        </div>`).join('') : `<div class="empty">${Icon.bell}<div>No trusted contacts yet.</div></div>`}
+    </div>
+    <button class="btn btn-primary" id="add-contact-btn">+ Add trusted contact</button>
+  `;
+  return withChrome('Contacts', body);
+}
+function wireContacts(){
+  $('#add-contact-btn')?.addEventListener('click', ()=>{
+    openContactSheet(async c=>{ State.profile.contacts.push({id:uid(), ...c, enabled:true}); await saveProfile(); render(); });
+  });
+  root.querySelectorAll('[data-toggle-contact]').forEach(el=>{
+    el.addEventListener('change', async ()=>{
+      const c = State.profile.contacts.find(c=>c.id===el.dataset.toggleContact);
+      c.enabled = el.checked; await saveProfile(); toast(c.enabled ? `${c.name} enabled` : `${c.name} disabled`);
+    });
+  });
+  root.querySelectorAll('[data-remove-contact]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      State.profile.contacts = State.profile.contacts.filter(c=>c.id!==b.dataset.removeContact);
+      await saveProfile(); render();
+    });
+  });
+}
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+function renderSettings(){
+  const p = State.profile.user.preferences;
+  const body = `
+    <div class="eyebrow">Configuration</div>
+    <h1 class="h-title">Settings</h1>
+
+    <div class="card">
+      <div class="card-title">Demo Mode</div>
+      <div class="card-sub" style="margin-bottom:10px;">Lets judges reproduce deviation, escalation, and hazard-AI flows without needing a real multi-hour walk. All demo-synthesized data is clearly labeled.</div>
+      <button class="btn ${p.demoMode?'btn-alert':'btn-outline'}" id="toggle-demo">${p.demoMode? 'Turn off Demo Mode' : 'Turn on Demo Mode'}</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Safety tuning</div>
+      <label>Deviation sensitivity (meters)</label>
+      <input type="number" id="st-dev" value="${p.deviationThresholdM}" min="30" step="10"/>
+      <label>Readings needed before alarming (debounce)</label>
+      <input type="number" id="st-streak" value="${p.deviationStreakNeeded}" min="1" step="1"/>
+      <label>Unexpected-stop timeout (minutes)</label>
+      <input type="number" id="st-stop" value="${p.stopTimeoutMin}" min="1" step="1"/>
+      <label>Safety-check response window (seconds)</label>
+      <input type="number" id="st-timeout" value="${p.safetyCheckTimeoutSec}" min="10" step="5"/>
+      <button class="btn btn-primary" id="save-settings" style="margin-top:14px;">Save preferences</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">About this build</div>
+      <div class="card-sub" style="line-height:1.6;">Location, journeys, safety events, and hazard reports are stored in a real persistent backend on this device/session. Trusted-contact alerts use in-app + browser notifications (no SMS provider is configured in this environment). See the README for what's simulated and how to wire Firebase / Google Maps / Gemini for production.</div>
+    </div>
+
+    <button class="btn btn-ghost" id="reset-app" style="margin-top:4px;">Reset all app data</button>
+  `;
+  return withChrome('Settings', body);
+}
+function wireSettings(){
+  $('#toggle-demo')?.addEventListener('click', async ()=>{
+    State.profile.user.preferences.demoMode = !State.profile.user.preferences.demoMode;
+    await saveProfile(); render();
+  });
+  $('#save-settings')?.addEventListener('click', async ()=>{
+    const p = State.profile.user.preferences;
+    p.deviationThresholdM = Number($('#st-dev').value)||p.deviationThresholdM;
+    p.deviationStreakNeeded = Math.max(1, Number($('#st-streak').value)||p.deviationStreakNeeded);
+    p.stopTimeoutMin = Number($('#st-stop').value)||p.stopTimeoutMin;
+    p.safetyCheckTimeoutSec = Number($('#st-timeout').value)||p.safetyCheckTimeoutSec;
+    await saveProfile(); toast('Preferences saved.');
+  });
+  $('#reset-app')?.addEventListener('click', ()=>{
+    confirmSheet('Reset all app data?', "This clears your profile, journeys, and this device's view of community hazard reports. This cannot be undone.", async ()=>{
+      stopWatch();
+      await storeSet(StorageKeys.PROFILE, null, false);
+      await storeSet(StorageKeys.JOURNEYS, [], false);
+      State.profile = null; State.journeys = []; State.activeJourneyId = null; State.view='onboarding';
+      State.onboardDraft = { name:'', contacts:[], locationGranted:false, locationError:null, prefs:{...DEFAULT_PREFS} };
+      render();
+    });
+  });
+}
+function confirmSheet(title, body, onConfirm){
+  const host = $('#modalHost');
+  host.innerHTML = `<div class="overlay" id="confirm-overlay"><div class="sheet">
+    <h3 style="margin:0 0 8px;">${title}</h3>
+    <p class="card-sub" style="margin:0 0 16px;">${body}</p>
+    <div class="btn-row"><button class="btn btn-ghost" id="cf-cancel">Cancel</button><button class="btn btn-alert" id="cf-ok">Confirm</button></div>
+  </div></div>`;
+  $('#cf-cancel').addEventListener('click', ()=> host.innerHTML='');
+  $('#confirm-overlay').addEventListener('click', e=>{ if(e.target.id==='confirm-overlay') host.innerHTML=''; });
+  $('#cf-ok').addEventListener('click', ()=>{ host.innerHTML=''; onConfirm(); });
+}
+
+/* =========================================================
+   Schematic "thread map" — canvas rendering of a route.
+   Not a road-following map (no Google Maps key in this env) — see README.
+   Draws: planned route (dashed thread), actual travelled path, current
+   position (pulsing dot), and a red flare when deviation is active.
+   ========================================================= */
+function drawThreadMap(canvas, {origin, destination, expectedRoute, path, deviationActive, hazardsNearby}){
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 400, cssH = 210;
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  // background grid (subtle, evokes a map without pretending to be one)
+  ctx.strokeStyle = 'rgba(255,255,255,0.035)'; ctx.lineWidth=1;
+  for(let x=0;x<cssW;x+=26){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,cssH); ctx.stroke(); }
+  for(let y=0;y<cssH;y+=26){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cssW,y); ctx.stroke(); }
+
+  const allPts = [origin, destination, ...(expectedRoute||[]), ...(path||[]), ...(hazardsNearby||[]).map(h=>h.location)].filter(Boolean);
+  if(!allPts.length) return;
+  const lats = allPts.map(p=>p.lat), lngs = allPts.map(p=>p.lng);
+  const pad = 0.12;
+  const latSpan = Math.max(0.0006, Math.max(...lats)-Math.min(...lats));
+  const lngSpan = Math.max(0.0006, Math.max(...lngs)-Math.min(...lngs));
+  const minLat = Math.min(...lats)-latSpan*pad, maxLat = Math.max(...lats)+latSpan*pad;
+  const minLng = Math.min(...lngs)-lngSpan*pad, maxLng = Math.max(...lngs)+lngSpan*pad;
+  const toXY = p => {
+    const x = ((p.lng-minLng)/(maxLng-minLng)) * (cssW-40) + 20;
+    const y = cssH - (((p.lat-minLat)/(maxLat-minLat)) * (cssH-40) + 20);
+    return {x,y};
+  };
+
+  // hazard markers (context)
+  (hazardsNearby||[]).forEach(h=>{
+    const {x,y} = toXY(h.location);
+    ctx.fillStyle = h.severity==='high' ? 'rgba(255,92,77,.55)' : h.severity==='medium' ? 'rgba(242,183,5,.5)' : 'rgba(51,214,174,.4)';
+    ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+  });
+
+  // planned route (dashed thread)
+  if(expectedRoute && expectedRoute.length>1){
+    ctx.setLineDash([6,6]);
+    ctx.strokeStyle = deviationActive ? 'rgba(255,92,77,.55)' : 'rgba(140,160,184,.55)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    expectedRoute.forEach((p,i)=>{ const {x,y}=toXY(p); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // actual travelled path
+  if(path && path.length>1){
+    ctx.strokeStyle = deviationActive ? '#FF5C4D' : '#33D6AE';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    path.forEach((p,i)=>{ const {x,y}=toXY(p); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke();
+  }
+
+  // origin marker
+  if(origin){ const {x,y}=toXY(origin); ctx.fillStyle='#8CA0B8'; ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fill(); }
+  // destination marker (flag-ish)
+  if(destination){
+    const {x,y}=toXY(destination);
+    ctx.fillStyle='#6C8EF5';
+    ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+    ctx.fillStyle='rgba(108,142,245,.25)'; ctx.beginPath(); ctx.arc(x,y,10,0,7); ctx.fill();
+  }
+  // current position (pulsing dot) = last path point, or origin
+  const cur = (path && path.length) ? path[path.length-1] : origin;
+  if(cur){
+    const {x,y} = toXY(cur);
+    ctx.fillStyle = deviationActive ? 'rgba(255,92,77,.25)' : 'rgba(51,214,174,.25)';
+    ctx.beginPath(); ctx.arc(x,y,13,0,7); ctx.fill();
+    ctx.fillStyle = deviationActive ? '#FF5C4D' : '#33D6AE';
+    ctx.beginPath(); ctx.arc(x,y,5.5,0,7); ctx.fill();
+    ctx.strokeStyle = '#0A121D'; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+
+/* =========================================================
+   START JOURNEY
+   No Google Directions/Places key is available in this environment, so:
+   - Origin is the user's REAL current location (Geolocation API).
+   - Destination is either typed lat/lng, or a "quick pick" that offsets
+     a real bearing/distance from the real origin (clearly a placeholder
+     for a geocoded address — see README).
+   - expectedRoute is a straight-line polyline between them (schematic).
+   ========================================================= */
+const QUICK_DESTS = [
+  {label:'Library', bearing: 35, distanceM: 900},
+  {label:'Metro station', bearing: 140, distanceM: 1400},
+  {label:'Hostel gate', bearing: 260, distanceM: 650},
+];
+function offsetPoint(origin, bearingDeg, distanceM){
+  const br = toRad(bearingDeg);
+  const dByR = distanceM / R_EARTH;
+  const lat1 = toRad(origin.lat), lng1 = toRad(origin.lng);
+  const lat2 = Math.asin(Math.sin(lat1)*Math.cos(dByR) + Math.cos(lat1)*Math.sin(dByR)*Math.cos(br));
+  const lng2 = lng1 + Math.atan2(Math.sin(br)*Math.sin(dByR)*Math.cos(lat1), Math.cos(dByR)-Math.sin(lat1)*Math.sin(lat2));
+  return {lat: lat2*180/Math.PI, lng: lng2*180/Math.PI};
+}
+
+State.planning = State.planning || {origin:null, originError:null, destLabel:'', destPoint:null, manualLat:'', manualLng:'', loadingOrigin:false};
+
+function renderStartJourney(){
+  const pl = State.planning;
+  if(activeJourney()){
+    return withChrome('Journey', `
+      <div class="empty">${Icon.route}<div style="margin-bottom:14px;">A journey is already active.</div>
+      <button class="btn btn-primary btn-sm" data-nav="activeJourney">Go to active journey</button></div>
+    `);
+  }
+  const route = pl.origin && pl.destPoint ? [pl.origin, pl.destPoint] : null;
+  const hazards = route ? nearbyHazards(route, true) : [];
+  const context = route ? routeSafetyContextMessage(hazards) : null;
+
+  const body = `
+    <div class="eyebrow">Plan</div>
+    <h1 class="h-title">Start a journey</h1>
+    <p class="h-sub">Set an origin and destination, review the route, then start tracking.</p>
+
+    <div class="card">
+      <div class="card-row">
+        <div><div class="card-title">Origin</div><div class="card-sub">${pl.origin ? `${pl.origin.lat.toFixed(5)}, ${pl.origin.lng.toFixed(5)} (your live location)` : 'Not set'}</div></div>
+        <button class="btn btn-outline btn-sm" id="get-origin">${pl.loadingOrigin? 'Locating…' : (pl.origin?'Refresh':'Use my location')}</button>
+      </div>
+      ${pl.originError ? `<div class="err-banner" style="margin-top:10px;">${Icon.x}<span>${escapeHtml(pl.originError)}</span></div>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px;">Destination</div>
+      <label>Label</label>
+      <input id="dest-label" placeholder="e.g. Central Library" value="${escapeAttr(pl.destLabel)}"/>
+      <div class="small-note" style="margin:8px 0;">No live geocoding service is connected — pick a quick sample nearby, or enter coordinates manually.</div>
+      <div>${QUICK_DESTS.map(q=>`<button class="chip" data-quick-dest="${q.label}" ${!pl.origin?'disabled':''}>${escapeHtml(q.label)} (~${q.distanceM}m)</button>`).join('')}</div>
+      <div class="divider"></div>
+      <label>Manual latitude</label><input id="dest-lat" placeholder="e.g. 28.6139" value="${escapeAttr(pl.manualLat)}"/>
+      <label>Manual longitude</label><input id="dest-lng" placeholder="e.g. 77.2090" value="${escapeAttr(pl.manualLng)}"/>
+      <button class="btn btn-ghost btn-sm" id="set-manual-dest" style="margin-top:10px;">Use manual coordinates</button>
+    </div>
+
+    ${route ? `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px;">Route preview</div>
+      <div class="map-wrap"><canvas id="plan-canvas"></canvas>
+        <div class="map-badge">Schematic route</div>
+        <div class="map-legend"><span><span class="dot" style="background:#8CA0B8"></span>Origin</span><span><span class="dot" style="background:#6C8EF5"></span>Destination</span></div>
+      </div>
+      ${context ? `<div class="small-note" style="margin-top:10px;">${context}</div>` : ''}
+    </div>` : ''}
+
+    <button class="btn btn-primary" id="begin-journey" ${route && pl.destLabel.trim() ? '' : 'disabled'}>Start journey</button>
+  `;
+  const html = withChrome('Start Journey', body);
+  return html;
+}
+function routeSafetyContextMessage(hazards){
+  if(!hazards.length) return 'No recent community hazard reports along this route.';
+  const byCat = {};
+  hazards.forEach(h=>{ byCat[h.category] = (byCat[h.category]||0)+1; });
+  const top = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  const catLabel = hazardCategoryLabel(top[0]);
+  if(hazards.length === 1){
+    return `This route has one recent community report (${catLabel}). Worth a glance, not a reason for alarm.`;
+  }
+  return `This route has ${hazards.length} recent community reports, mostly concerning ${catLabel.toLowerCase()}.`;
+}
+function hazardCategoryLabel(cat){
+  return {streetlight:'poor lighting', road_damage:'road damage', unsafe_crossing:'an unsafe crossing',
+    obstruction:'an obstruction', poor_visibility:'poor visibility', flooding:'flooding', other:'a reported hazard'}[cat] || 'a reported hazard';
+}
+
+function wireStartJourney(){
+  const pl = State.planning;
+  $('#get-origin')?.addEventListener('click', async ()=>{
+    pl.loadingOrigin = true; render();
+    try{ pl.origin = await getCurrentPosition(); pl.originError = null; }
+    catch(e){ pl.originError = geoErrorMessage(e); }
+    pl.loadingOrigin = false; render();
+  });
+  $('#dest-label')?.addEventListener('input', e=> pl.destLabel = e.target.value);
+  root.querySelectorAll('[data-quick-dest]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const q = QUICK_DESTS.find(q=>q.label===b.dataset.quickDest);
+      pl.destPoint = offsetPoint(pl.origin, q.bearing, q.distanceM);
+      if(!pl.destLabel.trim()) pl.destLabel = q.label;
+      render();
+    });
+  });
+  $('#dest-lat')?.addEventListener('input', e=> pl.manualLat = e.target.value);
+  $('#dest-lng')?.addEventListener('input', e=> pl.manualLng = e.target.value);
+  $('#set-manual-dest')?.addEventListener('click', ()=>{
+    const lat = parseFloat(pl.manualLat), lng = parseFloat(pl.manualLng);
+    if(isNaN(lat)||isNaN(lng)){ toast('Enter valid coordinates.'); return; }
+    pl.destPoint = {lat,lng}; render();
+  });
+  const canvas = $('#plan-canvas');
+  if(canvas && pl.origin && pl.destPoint){
+    drawThreadMap(canvas, {origin:pl.origin, destination:pl.destPoint, expectedRoute:[pl.origin,pl.destPoint], path:[], deviationActive:false,
+      hazardsNearby: nearbyHazards([pl.origin,pl.destPoint], true)});
+  }
+  $('#begin-journey')?.addEventListener('click', async ()=>{
+    if(!pl.origin || !pl.destPoint || !pl.destLabel.trim()) return;
+    const journey = {
+      id: uid(), userId: State.profile.user.id,
+      origin: pl.origin, destination: {...pl.destPoint, label: pl.destLabel.trim()},
+      expectedRoute: [pl.origin, pl.destPoint],
+      startedAt: nowISO(), endedAt: null, status: 'active',
+      path: [{...pl.origin, t: nowISO()}],
+      safetyEvents: [], escalations: [],
+    };
+    State.journeys.push(journey);
+    State.activeJourneyId = journey.id;
+    await saveJourneys();
+    State.planning = {origin:null, originError:null, destLabel:'', destPoint:null, manualLat:'', manualLng:'', loadingOrigin:false};
+    beginTracking(journey);
+    State.view = 'activeJourney';
+    render();
+  });
+}
+
+/* =========================================================
+   Live tracking loop (real GPS, or synthetic points in Demo Mode)
+   ========================================================= */
+function beginTracking(journey){
+  stopWatch();
+  journey._devStreak = 0; journey._stopAnchor = null;
+  const demo = State.profile.user.preferences.demoMode;
+  if(demo){
+    // Demo Mode: synthesize movement along the planned route so judges don't
+    // need to physically walk. Every synthetic point is timestamped and
+    // stored the same way real points are — only the *source* differs.
+    let t = 0;
+    State.demoTimer = setInterval(()=>{
+      t += 1;
+      const frac = Math.min(1, t/40);
+      const lerp = {
+        lat: journey.origin.lat + (journey.destination.lat-journey.origin.lat)*frac,
+        lng: journey.origin.lng + (journey.destination.lng-journey.origin.lng)*frac,
+      };
+      onLocationUpdate(journey, {...lerp, accuracy:8, synthetic:true});
+      if(frac>=1) clearInterval(State.demoTimer);
+    }, 1500);
+  } else {
+    State.watchId = startWatch(
+      point => onLocationUpdate(journey, point),
+      err => toast(geoErrorMessage(err))
+    );
+  }
+}
+
+async function onLocationUpdate(journey, point){
+  journey.path.push({...point, t: nowISO()});
+  if(journey.path.length > 2000) journey.path.shift(); // keep storage bounded
+  const prefs = State.profile.user.preferences;
+  const evalResult = evaluateJourneyTick(journey, point, prefs);
+  journey._lastEval = evalResult;
+
+  if(journey.status === 'active'){
+    if(evalResult.deviation.active){
+      triggerSafetyCheck(journey, 'deviation', `Route deviation of ~${Math.round(evalResult.deviation.distanceM)}m sustained over ${prefs.deviationStreakNeeded}+ readings.`);
+    } else if(evalResult.stop.active){
+      triggerSafetyCheck(journey, 'stop', `No meaningful movement for ~${Math.round(evalResult.stop.minutes)} minutes.`);
+    }
+  }
+  await saveJourneys();
+  if(State.view === 'activeJourney') render();
+}
+
+function endJourney(journey, status){
+  journey.status = status || 'completed';
+  journey.endedAt = nowISO();
+  stopWatch();
+  State.activeJourneyId = null;
+  saveJourneys();
+}
+
+/* =========================================================
+   ACTIVE JOURNEY
+   ========================================================= */
+function renderActiveJourney(){
+  const j = activeJourney();
+  if(!j){
+    return withChrome('Journey', `<div class="empty">${Icon.route}<div style="margin-bottom:14px;">No active journey.</div>
+      <button class="btn btn-primary btn-sm" data-nav="startJourney">Start a journey</button></div>`);
+  }
+  const ev = j._lastEval || {deviation:{active:false,distanceM:0}, stop:{active:false,minutes:0}};
+  const demo = State.profile.user.preferences.demoMode;
+  const hazards = nearbyHazards(j.expectedRoute, true);
+  const risk = computeRisk({deviation:ev.deviation, stop:ev.stop, hazards});
+  const events = [...(j.safetyEvents||[])].reverse();
+
+  const body = `
+    <div class="eyebrow">Active journey</div>
+    <h1 class="h-title">To ${escapeHtml(j.destination.label)}</h1>
+    <p class="h-sub">Started ${fmtTime(j.startedAt)} · ${j.path.length} location update${j.path.length===1?'':'s'} logged</p>
+
+    <div class="map-wrap">
+      <canvas id="active-canvas"></canvas>
+      <div class="map-badge">${ev.deviation.active ? '⚠ Off planned route' : ev.stop.active ? '⏱ Stationary' : 'On track'}</div>
+      <div class="map-legend">
+        <span><span class="dot" style="background:#33D6AE"></span>Travelled</span>
+        <span><span class="dot" style="background:#8CA0B8"></span>Planned</span>
+        ${hazards.length? `<span><span class="dot" style="background:#F2B705"></span>${hazards.length} hazard(s) nearby</span>`:''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-row"><div class="card-title">Live risk assessment</div><span class="tag tag-${risk.level.toLowerCase()==='moderate'?'medium':risk.level.toLowerCase()}">${risk.level}</span></div>
+      <div class="risk-meter">
+        <div class="risk-seg ${risk.level==='LOW'||risk.level==='MODERATE'||risk.level==='HIGH'?'on-low':''}"></div>
+        <div class="risk-seg ${risk.level==='MODERATE'||risk.level==='HIGH'?'on-med':''}"></div>
+        <div class="risk-seg ${risk.level==='HIGH'?'on-high':''}"></div>
+      </div>
+      <div class="card-sub">${risk.explanation}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-row"><div class="card-sub">Distance from planned route</div><div class="mono" style="font-size:13px;">${Math.round(ev.deviation.distanceM)} m</div></div>
+      <div class="card-row" style="margin-top:8px;"><div class="card-sub">Stationary for</div><div class="mono" style="font-size:13px;">${ev.stop.minutes.toFixed(1)} min</div></div>
+    </div>
+
+    ${demo ? `
+    <div class="card" style="border-color:#8a6d0f;">
+      <div class="card-title" style="color:var(--caution);margin-bottom:8px;">DEMO MODE controls</div>
+      <div class="card-sub" style="margin-bottom:10px;">Reproduce the workflow for judging — see README §8.</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" id="demo-deviate">Simulate deviation</button>
+        <button class="btn btn-ghost btn-sm" id="demo-stop">Simulate stop</button>
+      </div>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px;">Safety check history</div>
+      ${events.length ? events.map(e=>`
+        <div class="list-item">
+          <div class="avatar">${e.status==='resolved'?Icon.check:e.status==='escalated'?Icon.bell:Icon.shield}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:13.5px;">${e.type==='deviation'?'Route deviation':e.type==='stop'?'Unexpected stop':'Manual'} — ${statusLabel(e.status)}</div>
+            <div class="card-sub">${fmtTime(e.timestamp)} · ${escapeHtml(e.detail||'')}</div>
+          </div>
+        </div>`).join('') : `<div class="small-note">No safety checks triggered yet.</div>`}
+    </div>
+
+    <button class="btn btn-alert" id="manual-help">I need help now</button>
+    <div style="height:10px;"></div>
+    <button class="btn btn-ghost" id="end-journey">End journey</button>
+  `;
+  return withChrome('Active Journey', body);
+}
+function statusLabel(s){ return {pending:'Pending', resolved:'Resolved — OK', escalated:'Escalated to contacts'}[s] || s; }
+
+function wireActiveJourney(){
+  const j = activeJourney();
+  if(!j) return;
+  const canvas = $('#active-canvas');
+  const ev = j._lastEval || {deviation:{active:false}};
+  if(canvas) drawThreadMap(canvas, {origin:j.origin, destination:j.destination, expectedRoute:j.expectedRoute, path:j.path,
+    deviationActive: ev.deviation.active, hazardsNearby: nearbyHazards(j.expectedRoute, true)});
+
+  $('#manual-help')?.addEventListener('click', ()=>{
+    if(State.pendingSafetyEvent){ toast('A safety check is already in progress.'); return; }
+    const e = createSafetyEvent(j, 'manual', 'User pressed "I need help now".');
+    escalateToContacts(j, e, 'User pressed "I need help now".');
+  });
+  $('#end-journey')?.addEventListener('click', ()=>{
+    confirmSheet('End this journey?', 'Tracking will stop and the journey will be marked completed.', ()=>{
+      endJourney(j, 'completed');
+      toast('Journey ended.');
+      State.view = 'home'; render();
+    });
+  });
+  $('#demo-deviate')?.addEventListener('click', ()=>{
+    const last = j.path[j.path.length-1] || j.origin;
+    const off = offsetPoint(last, (Math.random()*360)|0, 400);
+    onLocationUpdate(j, {...off, accuracy:10, synthetic:true});
+    toast('DEMO: injected a synthetic deviated point.');
+  });
+  $('#demo-stop')?.addEventListener('click', ()=>{
+    j._stopAnchor = { ...(j.path[j.path.length-1]||j.origin), since: Date.now() - (State.profile.user.preferences.stopTimeoutMin*60000 + 1000) };
+    onLocationUpdate(j, j.path[j.path.length-1]||j.origin);
+    toast('DEMO: fast-forwarded the stop timer.');
+  });
+}
+
+/* =========================================================
+   Safety check modal (global overlay, driven by State.pendingSafetyEvent)
+   ========================================================= */
+function renderSafetyCheckModal(){
+  const pend = State.pendingSafetyEvent;
+  const host = $('#modalHost');
+  if(!pend){ if(host.dataset.kind==='safety'){ host.innerHTML=''; host.dataset.kind=''; } return; }
+  const secsLeft = Math.max(0, Math.ceil((pend.deadline - Date.now())/1000));
+  const pct = Math.max(0, Math.min(100, (secsLeft/pend.timeoutSec)*100));
+  host.dataset.kind = 'safety';
+  host.innerHTML = `<div class="overlay"><div class="sheet alert-sheet">
+    <div style="text-align:center;">
+      <div style="font-size:34px;line-height:1;margin-bottom:8px;">${Icon.shield.replace('currentColor','#FF5C4D')}</div>
+    </div>
+    <h3 style="margin:0 0 8px;text-align:center;">Your journey appears different from the planned route. Are you okay?</h3>
+    <div class="progressbar"><div class="progressbar-fill" style="width:${pct}%;"></div></div>
+    <div class="card-sub" style="text-align:center;margin-bottom:16px;">Auto-escalates to your trusted contacts in <span class="mono">${secsLeft}s</span> if there's no response.</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="sc-ok">I'm OK</button>
+      <button class="btn btn-alert" id="sc-help">I need help</button>
+    </div>
+  </div></div>`;
+  $('#sc-ok').addEventListener('click', ()=> resolveSafetyEvent('ok'));
+  $('#sc-help').addEventListener('click', ()=> resolveSafetyEvent('help'));
+}
+
+function heartbeat(){
+  const pend = State.pendingSafetyEvent;
+  if(pend && Date.now() >= pend.deadline){
+    const journey = getJourney(pend.journeyId);
+    const ev = (journey.safetyEvents||[]).find(e=>e.id===pend.eventId);
+    if(ev){ escalateToContacts(journey, ev, 'No response to safety check within the configured window.'); }
+    else { State.pendingSafetyEvent = null; render(); }
+  } else if(pend){
+    renderSafetyCheckModal(); // just refresh the countdown, no full re-render needed
+  }
+}
+setInterval(heartbeat, 1000);
+
+/* =========================================================
+   HAZARD REPORT (Phase 2)
+   ========================================================= */
+const HAZARD_CATS = [
+  ['streetlight','Streetlight'], ['road_damage','Road damage'], ['unsafe_crossing','Unsafe crossing'],
+  ['obstruction','Obstruction'], ['poor_visibility','Poor visibility'], ['flooding','Flooding'], ['other','Other'],
+];
+const SAMPLE_HAZARD_SVG = `data:image/svg+xml;base64,${btoa(`
+<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>
+  <rect width='400' height='300' fill='#0c1a29'/>
+  <rect x='0' y='230' width='400' height='70' fill='#1c2c3d'/>
+  <line x1='0' y1='230' x2='400' y2='230' stroke='#3a4f66' stroke-width='2'/>
+  <rect x='185' y='40' width='10' height='195' fill='#5a6c80'/>
+  <circle cx='190' cy='38' r='16' fill='#3a4552' stroke='#222' stroke-width='2'/>
+  <path d='M170 38 L145 20' stroke='#222' stroke-width='4'/>
+  <text x='200' y='120' fill='#8CA0B8' font-family='monospace' font-size='13'>SAMPLE HAZARD PHOTO</text>
+  <text x='200' y='140' fill='#5D7188' font-family='monospace' font-size='11'>non-functional streetlight (demo)</text>
+</svg>`)}`;
+
+State.hazardDraft = { imageData:null, mediaType:null, description:'', location:null, locationError:null, loadingLocation:false,
+  aiResult:null, aiLoading:false, aiError:null, editCategory:null, editSeverity:null };
+
+function renderHazardReport(){
+  const d = State.hazardDraft;
+  const body = `
+    <div class="eyebrow">Community safety</div>
+    <h1 class="h-title">Report a hazard</h1>
+    <p class="h-sub">Broken lights, damaged roads, unsafe crossings — helps route safety context for everyone.</p>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px;">Photo</div>
+      ${d.imageData ? `<img class="thumb" src="${d.imageData}"/>
+        <button class="btn btn-ghost btn-sm" id="clear-photo" style="margin-top:10px;">Remove photo</button>` : `
+        <label class="upload-box" for="photo-input">${Icon.camera}<div style="margin-top:8px;">Tap to take or choose a photo</div>
+          <input type="file" id="photo-input" accept="image/*" capture="environment"/></label>
+        ${State.profile.user.preferences.demoMode ? `<button class="btn btn-outline btn-sm" id="use-sample-photo" style="margin-top:10px;">Use sample hazard photo (DEMO)</button>` : ''}
+      `}
+    </div>
+
+    <div class="card">
+      <label>Description (optional)</label>
+      <textarea id="hz-desc" rows="3" placeholder="What did you notice?">${escapeHtml(d.description)}</textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div><div class="card-title">Location</div><div class="card-sub">${d.location ? `${d.location.lat.toFixed(5)}, ${d.location.lng.toFixed(5)}` : 'Not captured'}</div></div>
+        <button class="btn btn-outline btn-sm" id="get-hz-location">${d.loadingLocation?'Locating…':(d.location?'Refresh':'Capture location')}</button>
+      </div>
+      ${d.locationError ? `<div class="err-banner" style="margin-top:10px;">${Icon.x}<span>${escapeHtml(d.locationError)}</span></div>` : ''}
+    </div>
+
+    ${!d.aiResult ? `
+      <button class="btn btn-primary" id="analyze-btn" ${(!d.imageData && !d.description.trim()) || d.aiLoading ? 'disabled':''}>
+        ${d.aiLoading ? `<span class="spinner"></span> Analyzing…` : 'Analyze with AI'}
+      </button>
+      ${d.aiError ? `<div class="err-banner" style="margin-top:10px;">${Icon.x}<span>${escapeHtml(d.aiError)} You can still classify it manually below.</span>
+        </div><button class="btn btn-ghost btn-sm" id="manual-classify" style="margin-top:6px;">Classify manually instead</button>` : ''}
+    ` : `
+      <div class="card">
+        <div class="card-row"><div class="card-title">AI-suggested classification</div><span class="tag tag-${d.aiResult.severity==='low'?'low':d.aiResult.severity==='high'?'high':'medium'}">${d.aiResult.severity.toUpperCase()}</span></div>
+        <div class="card-sub" style="margin:6px 0 12px;">Confidence: ${(d.aiResult.confidence*100).toFixed(0)}% — review before submitting. Don't blindly trust this.</div>
+        <label>Category</label>
+        <select id="edit-category">${HAZARD_CATS.map(([v,l])=>`<option value="${v}" ${v===(d.editCategory||d.aiResult.category)?'selected':''}>${l}</option>`).join('')}</select>
+        <label>Severity</label>
+        <select id="edit-severity">${['low','medium','high'].map(s=>`<option value="${s}" ${s===(d.editSeverity||d.aiResult.severity)?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}</select>
+        <label>Description</label>
+        <textarea id="edit-desc" rows="2">${escapeHtml(d.aiResult.description)}</textarea>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-ghost" id="discard-ai">Discard</button>
+          <button class="btn btn-primary" id="confirm-submit">Confirm & submit</button>
+        </div>
+      </div>
+    `}
+  `;
+  return withChrome('Hazard Report', body);
+}
+
+function wireHazardReport(){
+  const d = State.hazardDraft;
+  $('#photo-input')?.addEventListener('change', e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { d.imageData = reader.result; d.mediaType = file.type || 'image/jpeg'; render(); };
+    reader.readAsDataURL(file);
+  });
+  $('#use-sample-photo')?.addEventListener('click', ()=>{ d.imageData = SAMPLE_HAZARD_SVG; d.mediaType='image/svg+xml'; render(); });
+  $('#clear-photo')?.addEventListener('click', ()=>{ d.imageData=null; d.mediaType=null; render(); });
+  $('#hz-desc')?.addEventListener('input', e=> d.description = e.target.value);
+  $('#get-hz-location')?.addEventListener('click', async ()=>{
+    d.loadingLocation = true; render();
+    try{ d.location = await getCurrentPosition(); d.locationError = null; }
+    catch(e){ d.locationError = geoErrorMessage(e); }
+    d.loadingLocation = false; render();
+  });
+  $('#analyze-btn')?.addEventListener('click', async ()=>{
+    d.aiLoading = true; d.aiError = null; render();
+    try{
+      const base64 = d.imageData ? d.imageData.split(',')[1] : null;
+      const result = await classifyHazardWithAI({imageBase64: base64, mediaType: d.mediaType, description: d.description});
+      d.aiResult = result; d.editCategory = result.category; d.editSeverity = result.severity;
+    }catch(e){
+      d.aiError = e.message || 'AI classification failed.';
+    }
+    d.aiLoading = false; render();
+  });
+  $('#manual-classify')?.addEventListener('click', ()=>{
+    d.aiResult = { category:'other', description: d.description || 'Unspecified hazard.', severity:'medium', confidence:0 };
+    d.editCategory = 'other'; d.editSeverity='medium'; d.aiError=null; render();
+  });
+  $('#edit-category')?.addEventListener('change', e=> d.editCategory = e.target.value);
+  $('#edit-severity')?.addEventListener('change', e=> d.editSeverity = e.target.value);
+  $('#edit-desc')?.addEventListener('input', e=> d.aiResult.description = e.target.value);
+  $('#discard-ai')?.addEventListener('click', ()=>{ d.aiResult=null; render(); });
+  $('#confirm-submit')?.addEventListener('click', async ()=>{
+    if(!d.location){ toast('Capture a location before submitting.'); return; }
+    const report = {
+      id: uid(), reporterId: State.profile.user.id, location: d.location,
+      category: d.editCategory || d.aiResult.category,
+      description: $('#edit-desc')?.value || d.aiResult.description,
+      severity: d.editSeverity || d.aiResult.severity,
+      confidence: d.aiResult.confidence,
+      imageRef: d.imageData ? 'attached' : null,
+      createdAt: nowISO(), status: 'confirmed', relatedTo: null,
+    };
+    const related = findRelatedHazard(report);
+    if(related){ report.relatedTo = related.id; related.occurrences = (related.occurrences||1); }
+    State.hazards.push(report);
+    await saveHazards();
+    State.hazardDraft = { imageData:null, mediaType:null, description:'', location:null, locationError:null, loadingLocation:false,
+      aiResult:null, aiLoading:false, aiError:null, editCategory:null, editSeverity:null };
+    toast(related ? 'Submitted — linked to an existing nearby report.' : 'Hazard report submitted. Thank you.');
+    State.view = 'communityMap';
+    render();
+  });
+}
+
+/* =========================================================
+   COMMUNITY SAFETY MAP
+   ========================================================= */
+function renderCommunityMap(){
+  const confirmed = State.hazards.filter(h=>h.status==='confirmed').sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const body = `
+    <div class="eyebrow">Community</div>
+    <h1 class="h-title">Safety map</h1>
+    <p class="h-sub">Confirmed hazard reports from the community. Locations are approximate; reporter identity is never shown.</p>
+    ${confirmed.length ? `
+    <div class="map-wrap"><canvas id="community-canvas"></canvas>
+      <div class="map-legend">
+        <span><span class="dot" style="background:#33D6AE"></span>Low</span>
+        <span><span class="dot" style="background:#F2B705"></span>Medium</span>
+        <span><span class="dot" style="background:#FF5C4D"></span>High</span>
+      </div>
+    </div>` : ''}
+    <div class="card">
+      ${confirmed.length ? confirmed.map(h=>`
+        <div class="list-item">
+          <div class="avatar">${severityDot(h.severity)}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:13.5px;">${hazardCategoryLabel(h.category)}${h.relatedTo?' <span class="card-sub">(linked report)</span>':''}</div>
+            <div class="card-sub">${escapeHtml(h.description)}</div>
+            <div class="card-sub" style="margin-top:2px;">${fmtDateTime(h.createdAt)} · ~${jitterLabel(h)}</div>
+          </div>
+          <span class="tag tag-${h.severity==='low'?'low':h.severity==='high'?'high':'medium'}">${h.severity.toUpperCase()}</span>
+        </div>`).join('') : `<div class="empty">${Icon.hazard}<div>No confirmed community reports yet.</div></div>`}
+    </div>
+  `;
+  return withChrome('Community Map', body);
+}
+function severityDot(sev){ return `<span class="dot" style="background:${sev==='high'?'#FF5C4D':sev==='medium'?'#F2B705':'#33D6AE'};width:12px;height:12px;"></span>`; }
+function jitterLabel(h){ return `${h.location.lat.toFixed(3)}, ${h.location.lng.toFixed(3)}`; }
+function wireCommunityMap(){
+  const confirmed = State.hazards.filter(h=>h.status==='confirmed');
+  const canvas = $('#community-canvas');
+  if(canvas && confirmed.length){
+    const pts = confirmed.map(h=>h.location);
+    const centerLat = pts.reduce((s,p)=>s+p.lat,0)/pts.length, centerLng = pts.reduce((s,p)=>s+p.lng,0)/pts.length;
+    drawThreadMap(canvas, {origin:{lat:centerLat,lng:centerLng}, destination:null, expectedRoute:null, path:null,
+      deviationActive:false, hazardsNearby: confirmed});
+  }
+}
+
+/* =========================================================
+   JOURNEY HISTORY
+   ========================================================= */
+function renderHistory(){
+  const journeys = [...State.journeys].sort((a,b)=> new Date(b.startedAt)-new Date(a.startedAt));
+  const body = `
+    <div class="eyebrow">Log</div>
+    <h1 class="h-title">Journey history</h1>
+    <div class="card">
+      ${journeys.length ? journeys.map(j=>{
+        const escalated = (j.escalations||[]).length>0;
+        return `<div class="list-item">
+          <div class="avatar">${Icon.route}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${escapeHtml(j.destination.label)}</div>
+            <div class="card-sub">${fmtDateTime(j.startedAt)} · ${(j.safetyEvents||[]).length} safety check(s)${escalated?' · escalated':''}</div>
+          </div>
+          <span class="tag tag-${j.status==='completed'?'low':j.status==='escalated'?'high':'medium'}">${journeyStatusLabel(j)}</span>
+        </div>`;
+      }).join('') : `<div class="empty">${Icon.route}<div>No journeys yet.</div></div>`}
+    </div>
+  `;
+  return withChrome('History', body, {noTabbar:false});
+}
+
+/* =========================================================
+   ROUTER / MAIN RENDER
+   ========================================================= */
+const SCREENS = {
+  onboarding: { render: renderOnboarding, wire: wireOnboarding },
+  home: { render: renderHome, wire: ()=>{} },
+  contacts: { render: renderContacts, wire: wireContacts },
+  startJourney: { render: renderStartJourney, wire: wireStartJourney },
+  activeJourney: { render: renderActiveJourney, wire: wireActiveJourney },
+  hazardReport: { render: renderHazardReport, wire: wireHazardReport },
+  communityMap: { render: renderCommunityMap, wire: wireCommunityMap },
+  history: { render: renderHistory, wire: ()=>{} },
+  settings: { render: renderSettings, wire: wireSettings },
+};
+
+function render(){
+  if(!State.profile){ State.view = 'onboarding'; }
+  const screen = SCREENS[State.view] || SCREENS.home;
+  root.innerHTML = screen.render();
+  wireNav();
+  screen.wire();
+  renderSafetyCheckModal();
+}
+function wireNav(){
+  root.querySelectorAll('[data-nav]').forEach(el=>{
+    el.addEventListener('click', ()=>{ State.view = el.dataset.nav; render(); });
+  });
+}
+
+async function init(){
+  root.innerHTML = `<div class="screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <div style="text-align:center;color:var(--text-dim);">${brandMark()}<div style="margin-top:10px;font-size:13px;">Loading SafeRoute AI…</div></div></div>`;
+  await loadAll();
+  if(State.profile){
+    State.view = 'home';
+    // resume tracking if a journey was left active (e.g. page reload)
+    const active = State.journeys.find(j=>j.status==='active');
+    if(active){
+      State.activeJourneyId = active.id;
+      active._devStreak = 0; active._stopAnchor = null;
+      beginTracking(active);
+    }
+  } else {
+    State.view = 'onboarding';
+  }
+  render();
+
+  // ask for notification permission once, non-blocking (used for escalation alerts)
+  if('Notification' in window && Notification.permission === 'default'){
+    try{ Notification.requestPermission(); }catch(e){}
+  }
+}
+init();
+</script>
+</body>
+</html>
